@@ -1,10 +1,8 @@
-import numpy as np
-import time
 import argparse
 
-from tqdm import tqdm
-from keras.datasets import mnist, cifar10
-from keras.models import load_model, Model
+from tensorflow.keras.datasets import cifar10, mnist
+from tensorflow.keras.models import load_model
+
 from sa import fetch_dsa, fetch_lsa, get_sc
 from utils import *
 
@@ -111,9 +109,7 @@ if __name__ == "__main__":
         test_lsa = fetch_lsa(model, x_train, x_test, "test", layer_names, args)
 
         target_lsa = fetch_lsa(model, x_train, x_target, args.target, layer_names, args)
-        target_cov = get_sc(
-            np.amin(target_lsa), args.upper_bound, args.n_bucket, target_lsa
-        )
+        target_cov = get_sc(np.amin(target_lsa), args.upper_bound, args.n_bucket, target_lsa)
 
         auc = compute_roc_auc(test_lsa, target_lsa)
         print(infog("ROC-AUC: " + str(auc * 100)))
@@ -122,9 +118,7 @@ if __name__ == "__main__":
         test_dsa = fetch_dsa(model, x_train, x_test, "test", layer_names, args)
 
         target_dsa = fetch_dsa(model, x_train, x_target, args.target, layer_names, args)
-        target_cov = get_sc(
-            np.amin(target_dsa), args.upper_bound, args.n_bucket, target_dsa
-        )
+        target_cov = get_sc(np.amin(target_dsa), args.upper_bound, args.n_bucket, target_dsa)
 
         auc = compute_roc_auc(test_dsa, target_dsa)
         print(infog("ROC-AUC: " + str(auc * 100)))

@@ -1,17 +1,14 @@
 import argparse
 
-import numpy as np
 import tensorflow as tf
-import keras.backend as K
-
-from keras.datasets import mnist, cifar10
-from keras.utils import np_utils
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D
-from keras.regularizers import l2
+from tensorflow.keras.datasets import cifar10, mnist
+from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten, MaxPooling2D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.regularizers import l2
 
 CLIP_MIN = -0.5
 CLIP_MAX = 0.5
+
 
 def train(args):
     if args.d == "mnist":
@@ -68,8 +65,8 @@ def train(args):
     x_train = (x_train / 255.0) - (1.0 - CLIP_MAX)
     x_test = (x_test / 255.0) - (1.0 - CLIP_MAX)
 
-    y_train = np_utils.to_categorical(y_train, 10)
-    y_test = np_utils.to_categorical(y_test, 10)
+    y_train = tf.keras.utils.to_categorical(y_train, 10)
+    y_test = tf.keras.utils.to_categorical(y_test, 10)
 
     model = Sequential()
     for layer in layers:
@@ -84,7 +81,7 @@ def train(args):
     model.fit(
         x_train,
         y_train,
-        epochs=50,
+        epochs=2,  # 50
         batch_size=128,
         shuffle=True,
         verbose=1,

@@ -1,11 +1,9 @@
-import numpy as np
-import time
 import os
-
 from multiprocessing import Pool
-from tqdm import tqdm
-from keras.models import load_model, Model
+
 from scipy.stats import gaussian_kde
+from tensorflow.keras.models import Model
+from tqdm import tqdm
 
 from utils import *
 
@@ -39,15 +37,15 @@ def _get_saved_path(base_path, dataset, dtype, layer_names):
 
 
 def get_ats(
-    model,
-    dataset,
-    name,
-    layer_names,
-    save_path=None,
-    batch_size=128,
-    is_classification=True,
-    num_classes=10,
-    num_proc=10,
+        model,
+        dataset,
+        name,
+        layer_names,
+        save_path=None,
+        batch_size=128,
+        is_classification=True,
+        num_classes=10,
+        num_proc=10,
 ):
     """Extract activation traces of dataset from model.
 
@@ -76,15 +74,16 @@ def get_ats(
     if is_classification:
         p = Pool(num_proc)
         print(prefix + "Model serving")
-        pred = model.predict_classes(dataset, batch_size=batch_size, verbose=1)
+
+        pred = np.argmax(model.predict(dataset, batch_size=batch_size, verbose=1), axis=-1)
+
         if len(layer_names) == 1:
             layer_outputs = [
                 temp_model.predict(dataset, batch_size=batch_size, verbose=1)
             ]
+
         else:
-            layer_outputs = temp_model.predict(
-                dataset, batch_size=batch_size, verbose=1
-            )
+            layer_outputs = np.argmax(model.predict(dataset, batch_size=batch_size, verbose=1), axis=-1)
 
         print(prefix + "Processing ATs")
         ats = None
@@ -92,9 +91,7 @@ def get_ats(
             print("Layer: " + layer_name)
             if layer_output[0].ndim == 3:
                 # For convolutional layers
-                layer_matrix = np.array(
-                    p.map(_aggr_output, [layer_output[i] for i in range(len(dataset))])
-                )
+                layer_matrix = np.array(p.map(_aggr_output, [layer_output[i] for i in range(len(dataset))]))
             else:
                 layer_matrix = np.array(layer_output)
 
@@ -163,9 +160,8 @@ def _get_train_target_ats(model, x_train, x_target, target_name, layer_names, ar
         )
         print(infog("train ATs is saved at " + saved_train_path[0]))
 
-    saved_target_path = _get_saved_path(
-        args.save_path, args.d, target_name, layer_names
-    )
+    saved_target_path = _get_saved_path(args.save_path, args.d, target_name, layer_names)
+
     if os.path.exists(saved_target_path[0]):
         print(infog("Found saved {} ATs, skip serving").format(target_name))
         # In case target_ats is stored in a disk
@@ -222,9 +218,7 @@ def fetch_dsa(model, x_train, x_target, target_name, layer_names, args):
     for i, at in enumerate(tqdm(target_ats)):
         label = target_pred[i]
         a_dist, a_dot = find_closest_at(at, train_ats[class_matrix[label]])
-        b_dist, _ = find_closest_at(
-            a_dot, train_ats[list(set(all_idx) - set(class_matrix[label]))]
-        )
+        b_dist, _ = find_closest_at(a_dot, train_ats[list(set(all_idx) - set(class_matrix[label]))])
         dsa.append(a_dist / b_dist)
 
     return dsa
@@ -249,10 +243,7 @@ def _get_kdes(train_ats, train_pred, class_matrix, args):
         for label in range(args.num_classes):
             col_vectors = np.transpose(train_ats[class_matrix[label]])
             for i in range(col_vectors.shape[0]):
-                if (
-                    np.var(col_vectors[i]) < args.var_threshold
-                    and i not in removed_cols
-                ):
+                if np.var(col_vectors[i]) < args.var_threshold and i not in removed_cols:
                     removed_cols.append(i)
 
         kdes = {}
@@ -261,9 +252,7 @@ def _get_kdes(train_ats, train_pred, class_matrix, args):
             refined_ats = np.delete(refined_ats, removed_cols, axis=0)
 
             if refined_ats.shape[0] == 0:
-                print(
-                    warn("ats were removed by threshold {}".format(args.var_threshold))
-                )
+                print(warn("ats were removed by threshold {}".format(args.var_threshold)))
                 break
             kdes[label] = gaussian_kde(refined_ats)
 
@@ -317,6 +306,7 @@ def fetch_lsa(model, x_train, x_target, target_name, layer_names, args):
             class_matrix[label].append(i)
 
     kdes, removed_cols = _get_kdes(train_ats, train_pred, class_matrix, args)
+    print("Kernel density estimations =", kdes)
 
     lsa = []
     print(prefix + "Fetching LSA")
