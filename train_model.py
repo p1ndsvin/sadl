@@ -81,7 +81,7 @@ def train(args):
     model.fit(
         x_train,
         y_train,
-        epochs=2,  # 50
+        epochs=50,
         batch_size=128,
         shuffle=True,
         verbose=1,
