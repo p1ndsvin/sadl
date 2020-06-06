@@ -3,6 +3,9 @@ __pycache__/
 *$py.class
 .venv
 .idea
-tmp/*
-model/*
+#tmp/*
+#model/*
 venv
+.DS_Store
+tmp2
+sadl
