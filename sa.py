@@ -83,7 +83,7 @@ def get_ats(
             ]
 
         else:
-            layer_outputs = np.argmax(model.predict(dataset, batch_size=batch_size, verbose=1), axis=-1)
+            layer_outputs = np.argmax(temp_model.predict(dataset, batch_size=batch_size, verbose=1), axis=-1)
 
         print(prefix + "Processing ATs")
         ats = None
